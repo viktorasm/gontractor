@@ -1,0 +1,168 @@
+swagger: "2.0"
+info:
+  description: Redbutton server API
+  title: Redbutton
+  version: "0.1.0"
+basePath: /api
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+paths:
+# --------------------------------------------------- ROOMS
+  /room:
+    post:
+      operationId: createNewRoom
+      tags:
+        - rooms
+      description: Creates a new room. user identified with voter-id will become the owner of the room.
+      parameters:
+        - $ref: "#/parameters/voterIdHeader"
+        - name: newRoom
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/roomInfo"
+      responses:
+        '200':
+          description: "info about the created room"
+          schema:
+            $ref: "#/definitions/roomInfo"
+  /what:
+    post:
+      tags:
+        - rooms
+      description: Creates a new room. user identified with voter-id will become the owner of the room.
+      parameters:
+        - $ref: "#/parameters/voterIdHeader"
+        - name: newRoom
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/roomInfo"
+      responses:
+        '200':
+          description: "info about the created room"
+          schema:
+            $ref: "#/definitions/roomInfo"
+  /room/{id}:
+    get:
+      tags:
+        - rooms
+      description: get room info by ID
+      parameters:
+        - $ref: "#/parameters/roomId"
+      responses:
+        '200':
+          description: "info about the created room"
+          schema:
+            $ref: "#/definitions/roomInfo"
+        404:
+          description: room was not found
+    post:
+      tags:
+        - rooms
+      description: update room. Only the room owner can do this
+      parameters:
+        - name: roomInfo
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/roomInfo"
+        - $ref: "#/parameters/roomId"
+        - $ref: "#/parameters/voterIdHeader"
+      responses:
+        '200':
+          description: "info about the room"
+          schema:
+            $ref: "#/definitions/roomInfo"
+        404:
+          description: room was not found
+  /room/{id}/voter/{voter-id}:
+    get:
+      tags:
+        - rooms
+      description: Voter information for the current room
+      parameters:
+        - $ref: "#/parameters/roomId"
+        - $ref: "#/parameters/voterId"
+      responses:
+        '200':
+          description: "info about the room"
+          schema:
+            $ref: "#/definitions/voterStatus"
+    post:
+      tags:
+        - rooms
+      description: Update voter information for the current room (e.g. change thumbs-up status)
+      parameters:
+        - $ref: "#/parameters/roomId"
+        - $ref: "#/parameters/voterId"
+        - name: voterStatus
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/voterStatus"
+      responses:
+        '200':
+          description: "info about the room"
+          schema:
+            $ref: "#/definitions/voterStatus"
+definitions:
+  voterStatus:
+    type: object
+    description: "It's a voter status"
+    properties:
+      happy:
+        type: boolean
+        description: "True if voter thumbs-ups this room"
+      owner:
+        type: boolean
+        description: Is voter the owner of the room?
+        readOnly: true
+    required:
+    - owner
+  roomInfo:
+    type: object
+    properties:
+      id:
+        type: string
+        readOnly: true
+      name:
+        type: string
+      participants:
+        type: integer
+      marks:
+        type: integer
+      errors:
+        type: array
+        items:
+          $ref: "#/definitions/error"
+      defaultError:
+        $ref: "#/definitions/error"
+  error:
+    type: object
+    properties:
+      message:
+        type: string
+parameters:
+  roomId:
+    name: id
+    in: path
+    description: room ID
+    required: true
+    type: string
+  voterIdHeader:
+    name: voter-id
+    in: header
+    type: string
+    description: \"current user\" from API point of view.
+    required: true
+  voterId:
+    name: voter-id
+    in: path
+    type: string
+    description: user id
+    required: true
