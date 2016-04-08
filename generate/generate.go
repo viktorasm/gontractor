@@ -185,7 +185,7 @@ func (g Generator) formattedOutput() string {
 
 	formatted, err := format.Source(g.buf.Bytes())
 	if err != nil {
-		println("failed to format:\n")
+		println("failed to format:")
 		return g.buf.String()
 	}
 
