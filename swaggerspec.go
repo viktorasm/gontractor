@@ -39,15 +39,15 @@ type SwaggerSchema struct {
 	Properties  *map[string]*SwaggerSchema `yaml:"properties"`
 	Description string                     `yaml:"description"`
 	Items       *SwaggerSchema             `yaml:"items"`
-	Required    []string                    `yaml:"required"`
+	Required    []string                   `yaml:"required"`
 }
 
 func (s SwaggerSchema) IsRequired(field string) bool {
-	if s.Properties==nil {
+	if s.Properties == nil {
 		return false
 	}
 	for _, f := range s.Required {
-		if f==field {
+		if f == field {
 			return true
 		}
 
@@ -103,19 +103,19 @@ func (f SwaggerFile) replaceReferences() error {
 		}
 	}
 
-	var replaceSchemaReferences func (s *SwaggerSchema) error
-	replaceSchemaReferences = func (s *SwaggerSchema) error {
-		if s.Properties!=nil {
-			for _, prop := range *s.Properties{
+	var replaceSchemaReferences func(s *SwaggerSchema) error
+	replaceSchemaReferences = func(s *SwaggerSchema) error {
+		if s.Properties != nil {
+			for _, prop := range *s.Properties {
 				err := replaceSchemaReferences(prop)
 				if err != nil {
 					return err
 				}
 			}
 		}
-		if s.Items!=nil && s.Items.Ref!="" {
-			schema,err := f.findRefSchema(s.Items.Ref)
-			if err!=nil {
+		if s.Items != nil && s.Items.Ref != "" {
+			schema, err := f.findRefSchema(s.Items.Ref)
+			if err != nil {
 				return err
 			}
 			s.Items = schema
