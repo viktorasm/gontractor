@@ -46,7 +46,7 @@ func (s SwaggerSchema) IsRequired(field string) bool {
 	if s.Properties == nil {
 		return false
 	}
-	for _, f := range s.Required {
+	for f := range s.Required {
 		if f == field {
 			return true
 		}
