@@ -13,12 +13,12 @@ Enables contract-first creation of Golang services by generating boilerplate cod
 ## Why not...
 
 * https://github.com/go-swagger/go-swagger ?
+  
   Output too bloated. 
-* https://github.com/go-kit/kit
+
+* https://github.com/go-kit/kit ?
+  
   Could be used as an underlying implementation
-
-## Current status
-
 
 ## Limitations
 
