@@ -80,7 +80,6 @@ func loadFile(inputFile string) (*SwaggerFile, error) {
 	file, err := ioutil.ReadFile(inputFile)
 	if err != nil {
 		return nil, err
-		panic(err.Error())
 	}
 
 	result := &SwaggerFile{}
