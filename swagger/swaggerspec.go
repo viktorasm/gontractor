@@ -56,12 +56,33 @@ func (s SwaggerSchema) IsRequired(field string) bool {
 }
 
 type SwaggerPathOperation struct {
-	path        string
-	httpMethod  string
+	GoInfo struct {
+		InterfaceMethodName string
+	} `yaml:"-"`
+
 	OperationId string                                   `yaml:"operationId"`
 	Description string                                   `yaml:"description"`
 	Parameters  []*SwaggerParameter                      `yaml:"parameters"`
 	Responses   map[string]*SwaggerPathOperationResponse `yaml:"responses"`
+}
+
+func (op SwaggerPathOperation) MethodCallSignature() string {
+	result := op.GoInfo.InterfaceMethodName + "("
+	for index, param := range op.Parameters {
+		if index > 0 {
+			result += ", "
+		}
+		result += param.GoName()
+	}
+	result += ")"
+	return result
+}
+
+func (op SwaggerPathOperation) SuccessHttpCode() string {
+	for key, _ := range op.Responses {
+		return key
+	}
+	return "http.StatusOK"
 }
 
 type SwaggerPathOperationResponse struct {
@@ -122,11 +143,8 @@ func (f SwaggerFile) replaceReferences() error {
 		return nil
 	}
 
-	for httpPath, pathOperations := range f.Paths {
-		for httpMethod, operationDescr := range pathOperations {
-			operationDescr.path = httpPath
-			operationDescr.httpMethod = httpMethod
-
+	for _, pathOperations := range f.Paths {
+		for _, operationDescr := range pathOperations {
 			for i := 0; i < len(operationDescr.Parameters); i++ {
 				p := operationDescr.Parameters[i]
 				ref := p.Ref

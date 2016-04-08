@@ -1,8 +1,8 @@
 package swagger
 
 import (
-	"testing"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestParamGoName(t *testing.T) {

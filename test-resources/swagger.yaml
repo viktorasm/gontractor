@@ -26,7 +26,7 @@ paths:
           schema:
             $ref: "#/definitions/roomInfo"
       responses:
-        '200':
+        '201':
           description: "info about the created room"
           schema:
             $ref: "#/definitions/roomInfo"

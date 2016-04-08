@@ -1,19 +1,26 @@
 package generate
-import (
-	"testing"
-	"github.com/viktorasm/gontractor/swagger"
-	"fmt"
-)
 
+import (
+	"fmt"
+	"github.com/viktorasm/gontractor/swagger"
+	"testing"
+)
 
 func TestSwaggerGen(t *testing.T) {
 	result := swagger.Parse("../test-resources/swagger.yaml")
 	//pretty.PrettyPrint(result)
 
-	opts := GeneratorSetup{}
-	opts.SetTagGenerators(JsonTags)
+	g := Generator{}
+	g.SetTagGenerators(JsonTags)
 
-	formattedInterface := generateInterface(*result, opts)
-	fmt.Println("-------------------")
+	formattedInterface := g.GenerateApiInterface(*result)
+
+	g = Generator{}
+	g.SetTagGenerators(JsonTags)
+
+	generatedServer := g.GenerateServerFromTemplate(*result, "../sample-templates/proprietary-api/server.tpl")
+	fmt.Println("------------------- Interface ---")
 	fmt.Println(formattedInterface)
+	fmt.Println("------------------- Server ------")
+	fmt.Println(generatedServer)
 }

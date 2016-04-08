@@ -1,32 +1,35 @@
 package generate
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/viktorasm/gontractor/swagger"
 	"go/format"
 	"regexp"
 	"strings"
-	"github.com/viktorasm/gontractor/swagger"
+	"text/template"
 )
 
 type TagGeneratorFunc func(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string
 
-type GeneratorSetup struct {
+type Generator struct {
 	tagGenerators []TagGeneratorFunc
 	buf           bytes.Buffer
 }
 
-func (gs *GeneratorSetup) out(s string, params ...interface{}) {
-	gs.buf.WriteString(fmt.Sprintf(s, params...))
+// simplification of adding buffer contents
+func (g *Generator) out(s string, params ...interface{}) {
+	g.buf.WriteString(fmt.Sprintf(s, params...))
 }
 
-func (s *GeneratorSetup) SetTagGenerators(tagGenerators ...TagGeneratorFunc) {
-	s.tagGenerators = tagGenerators
+func (g *Generator) SetTagGenerators(tagGenerators ...TagGeneratorFunc) {
+	g.tagGenerators = tagGenerators
 }
 
-func (s GeneratorSetup) generateTag(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string {
-	result := make([]string, len(s.tagGenerators))
-	for i, gen := range s.tagGenerators {
+func (g Generator) generateTag(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string {
+	result := make([]string, len(g.tagGenerators))
+	for i, gen := range g.tagGenerators {
 		result[i] = gen(fieldName, fieldDefinition, objectDefinition)
 	}
 	return "`" + strings.Join(result, " ") + "`"
@@ -40,7 +43,7 @@ func JsonTags(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDef
 	return fmt.Sprintf("json:\"%s\"", result)
 }
 
-func (s GeneratorSetup) generateMethodName(httpMethod string, httpPath string, methodDef swagger.SwaggerPathOperation) string {
+func (g Generator) generateMethodName(httpMethod string, httpPath string, methodDef swagger.SwaggerPathOperation) string {
 	if methodDef.OperationId != "" {
 		return methodDef.OperationId
 	}
@@ -48,16 +51,16 @@ func (s GeneratorSetup) generateMethodName(httpMethod string, httpPath string, m
 	return httpMethod + "_" + strings.Trim(regexp.MustCompile("[^a-zA-Z0-9]+").ReplaceAllString(httpPath, "_"), "_")
 }
 
-func (gs *GeneratorSetup) writeComment(s string) {
+func (g *Generator) writeComment(s string) {
 	if s != "" {
-		gs.out("// ")
-		gs.out(s)
-		gs.out("\n")
+		g.out("// ")
+		g.out(s)
+		g.out("\n")
 	}
 }
 
-func (gs *GeneratorSetup) writeSchemaDef(f swagger.SwaggerFile, s swagger.SwaggerSchema) {
-	out := gs.out
+func (g *Generator) writeSchemaDef(f swagger.SwaggerFile, s swagger.SwaggerSchema) {
+	out := g.out
 
 	if s.Ref != "" {
 		ref, err := f.FindRefSchema(s.Ref)
@@ -71,7 +74,7 @@ func (gs *GeneratorSetup) writeSchemaDef(f swagger.SwaggerFile, s swagger.Swagge
 	switch s.Type {
 	case "array":
 		out("[]")
-		gs.writeSchemaDef(f, *s.Items)
+		g.writeSchemaDef(f, *s.Items)
 	case "boolean":
 		out("bool")
 	case "integer":
@@ -84,13 +87,13 @@ func (gs *GeneratorSetup) writeSchemaDef(f swagger.SwaggerFile, s swagger.Swagge
 	case "object":
 		out("struct {\n")
 		for name, prop := range *s.Properties {
-			gs.writeComment(prop.Description)
+			g.writeComment(prop.Description)
 			out("    ")
 			out(strings.Title(name))
 			out(" ")
-			gs.writeSchemaDef(f, *prop)
+			g.writeSchemaDef(f, *prop)
 			out(" ")
-			out(gs.generateTag(name, *prop, s))
+			out(g.generateTag(name, *prop, s))
 
 			out("\n")
 
@@ -102,8 +105,8 @@ func (gs *GeneratorSetup) writeSchemaDef(f swagger.SwaggerFile, s swagger.Swagge
 	}
 }
 
-func (s *GeneratorSetup) writeMethodParameter(f swagger.SwaggerFile, param swagger.SwaggerParameter) {
-	out := s.out
+func (g *Generator) writeMethodParameter(f swagger.SwaggerFile, param swagger.SwaggerParameter) {
+	out := g.out
 
 	out(param.GoName())
 	out(" ")
@@ -128,13 +131,15 @@ func (s *GeneratorSetup) writeMethodParameter(f swagger.SwaggerFile, param swagg
 	}
 }
 
-func generateInterface(f swagger.SwaggerFile, generatorSetup GeneratorSetup) string {
-	out := generatorSetup.out
+// generates common API: request/response types (based on #/definitions/*), and
+// a service interface (a function for for each HTTP method in each path)
+func (g Generator) GenerateApiInterface(f swagger.SwaggerFile) string {
+	out := g.out
 
 	for _, definition := range f.Definitions {
-		generatorSetup.writeComment(definition.Description)
+		g.writeComment(definition.Description)
 		out("type %v ", definition.GoTypeName)
-		generatorSetup.writeSchemaDef(f, *definition)
+		g.writeSchemaDef(f, *definition)
 		out("\n")
 	}
 
@@ -143,15 +148,16 @@ func generateInterface(f swagger.SwaggerFile, generatorSetup GeneratorSetup) str
 	for httpPath, methodDefs := range f.Paths {
 		for httpMethod, methodDef := range methodDefs {
 			out("// %s %s\n", strings.ToUpper(httpMethod), httpPath)
-			generatorSetup.writeComment(methodDef.Description)
+			g.writeComment(methodDef.Description)
 
-			out(generatorSetup.generateMethodName(httpMethod, httpPath, *methodDef))
+			methodDef.GoInfo.InterfaceMethodName = g.generateMethodName(httpMethod, httpPath, *methodDef)
+			out(methodDef.GoInfo.InterfaceMethodName)
 			out("(")
 			for index, param := range methodDef.Parameters {
 				if index != 0 {
 					out(", ")
 				}
-				generatorSetup.writeMethodParameter(f, *param)
+				g.writeMethodParameter(f, *param)
 			}
 
 			out(") (")
@@ -172,10 +178,45 @@ func generateInterface(f swagger.SwaggerFile, generatorSetup GeneratorSetup) str
 	out("}\n")
 
 	//fmt.Println(generatorSetup.buf.String())
-	formatted, err := format.Source(generatorSetup.buf.Bytes())
+	return g.formattedOutput()
+}
+
+func (g Generator) formattedOutput() string {
+
+	formatted, err := format.Source(g.buf.Bytes())
 	if err != nil {
-		panic("failed to format: " + err.Error())
+		println("failed to format:\n")
+		return g.buf.String()
 	}
 
 	return string(formatted)
+}
+
+type TemplateData struct {
+	Package struct {
+		This string
+		Api  string
+	}
+	Spec *swagger.SwaggerFile
+}
+
+func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerFile, templateFileName string) string {
+	d := TemplateData{}
+	d.Package.This = "something_this"
+	d.Package.Api = "github.com/viktorasm/gontractor"
+	d.Spec = &f
+
+	funcMap := template.FuncMap{
+		// The name "title" is what the function will be called in the template text.
+		"title": strings.Title,
+	}
+
+	t := template.Must(template.New("server.tpl").Funcs(funcMap).ParseFiles(templateFileName))
+	w := bufio.NewWriter(&g.buf)
+	err := t.Execute(w, &d)
+	if err != nil {
+		panic(err.Error())
+	}
+	w.Flush()
+	return g.formattedOutput()
 }
