@@ -1,14 +1,13 @@
-package gontractor
-
+package generate
 import (
 	"testing"
-	//	"github.com/gobs/pretty"
+	"github.com/viktorasm/gontractor/swagger"
 	"fmt"
-	"github.com/stretchr/testify/require"
 )
 
+
 func TestSwaggerGen(t *testing.T) {
-	result := swaggerGen("swagger.yaml")
+	result := swagger.Parse("../test-resources/swagger.yaml")
 	//pretty.PrettyPrint(result)
 
 	opts := GeneratorSetup{}
@@ -17,13 +16,4 @@ func TestSwaggerGen(t *testing.T) {
 	formattedInterface := generateInterface(*result, opts)
 	fmt.Println("-------------------")
 	fmt.Println(formattedInterface)
-}
-
-func TestParamGoName(t *testing.T) {
-	p := SwaggerParameter{
-		Name: "voter-id",
-	}
-
-	require.Equal(t, "voterId", p.goName())
-
 }

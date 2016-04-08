@@ -1,4 +1,4 @@
-package gontractor
+package swagger
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ type SwaggerParameter struct {
 	Type               string `yaml:"type"`
 }
 
-func (p SwaggerParameter) goName() string {
+func (p SwaggerParameter) GoName() string {
 	re := regexp.MustCompile("[^a-zA-Z]")
 	result := re.ReplaceAllString(p.Name, " ")
 	result = strings.Title(result)
@@ -32,7 +32,7 @@ func (p SwaggerParameter) goName() string {
 }
 
 type SwaggerSchema struct {
-	goTypeName  string
+	GoTypeName  string
 	Ref         string                     `yaml:"$ref"`
 	Type        string                     `yaml:"type"`
 	ReadOnly    bool                       `yaml:"readOnly"`
@@ -95,7 +95,7 @@ func (f SwaggerFile) replaceReferences() error {
 	updateParamSchema := func(p *SwaggerTypedObject) {
 		if p.Schema != nil && p.Schema.Ref != "" {
 			var err error
-			p.Schema, err = f.findRefSchema(p.Schema.Ref)
+			p.Schema, err = f.FindRefSchema(p.Schema.Ref)
 			if err != nil {
 				panic(err.Error())
 			}
@@ -113,7 +113,7 @@ func (f SwaggerFile) replaceReferences() error {
 			}
 		}
 		if s.Items != nil && s.Items.Ref != "" {
-			schema, err := f.findRefSchema(s.Items.Ref)
+			schema, err := f.FindRefSchema(s.Items.Ref)
 			if err != nil {
 				return err
 			}
@@ -149,7 +149,7 @@ func (f SwaggerFile) replaceReferences() error {
 
 func (f SwaggerFile) generateGoTypeNames() {
 	for key, value := range f.Definitions {
-		value.goTypeName = strings.Title(key)
+		value.GoTypeName = strings.Title(key)
 	}
 }
 
@@ -162,7 +162,7 @@ func (f SwaggerFile) findRefParam(ref string) (*SwaggerParameter, error) {
 	return result, nil
 }
 
-func (f SwaggerFile) findRefSchema(ref string) (*SwaggerSchema, error) {
+func (f SwaggerFile) FindRefSchema(ref string) (*SwaggerSchema, error) {
 	refName := strings.TrimPrefix(ref, "#/definitions/")
 	result, ok := f.Definitions[refName]
 	if !ok {
@@ -171,7 +171,7 @@ func (f SwaggerFile) findRefSchema(ref string) (*SwaggerSchema, error) {
 	return result, nil
 }
 
-func swaggerGen(inputfile string) *SwaggerFile {
+func Parse(inputfile string) *SwaggerFile {
 	result, err := loadFile(inputfile)
 	if err != nil {
 		panic(err.Error())

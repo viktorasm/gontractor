@@ -1,4 +1,4 @@
-package gontractor
+package generate
 
 import (
 	"bytes"
@@ -6,9 +6,10 @@ import (
 	"go/format"
 	"regexp"
 	"strings"
+	"github.com/viktorasm/gontractor/swagger"
 )
 
-type TagGeneratorFunc func(fieldName string, fieldDefinition SwaggerSchema, objectDefinition SwaggerSchema) string
+type TagGeneratorFunc func(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string
 
 type GeneratorSetup struct {
 	tagGenerators []TagGeneratorFunc
@@ -23,7 +24,7 @@ func (s *GeneratorSetup) SetTagGenerators(tagGenerators ...TagGeneratorFunc) {
 	s.tagGenerators = tagGenerators
 }
 
-func (s GeneratorSetup) generateTag(fieldName string, fieldDefinition SwaggerSchema, objectDefinition SwaggerSchema) string {
+func (s GeneratorSetup) generateTag(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string {
 	result := make([]string, len(s.tagGenerators))
 	for i, gen := range s.tagGenerators {
 		result[i] = gen(fieldName, fieldDefinition, objectDefinition)
@@ -31,7 +32,7 @@ func (s GeneratorSetup) generateTag(fieldName string, fieldDefinition SwaggerSch
 	return "`" + strings.Join(result, " ") + "`"
 }
 
-func JsonTags(fieldName string, fieldDefinition SwaggerSchema, objectDefinition SwaggerSchema) string {
+func JsonTags(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string {
 	result := fieldName
 	if !objectDefinition.IsRequired(fieldName) {
 		result = result + ",omitempty"
@@ -39,7 +40,7 @@ func JsonTags(fieldName string, fieldDefinition SwaggerSchema, objectDefinition 
 	return fmt.Sprintf("json:\"%s\"", result)
 }
 
-func (s GeneratorSetup) generateMethodName(httpMethod string, httpPath string, methodDef SwaggerPathOperation) string {
+func (s GeneratorSetup) generateMethodName(httpMethod string, httpPath string, methodDef swagger.SwaggerPathOperation) string {
 	if methodDef.OperationId != "" {
 		return methodDef.OperationId
 	}
@@ -55,15 +56,15 @@ func (gs *GeneratorSetup) writeComment(s string) {
 	}
 }
 
-func (gs *GeneratorSetup) writeSchemaDef(f SwaggerFile, s SwaggerSchema) {
+func (gs *GeneratorSetup) writeSchemaDef(f swagger.SwaggerFile, s swagger.SwaggerSchema) {
 	out := gs.out
 
 	if s.Ref != "" {
-		ref, err := f.findRefSchema(s.Ref)
+		ref, err := f.FindRefSchema(s.Ref)
 		if err != nil {
 			panic(err.Error())
 		}
-		out(ref.goTypeName)
+		out(ref.GoTypeName)
 		return
 	}
 
@@ -101,14 +102,14 @@ func (gs *GeneratorSetup) writeSchemaDef(f SwaggerFile, s SwaggerSchema) {
 	}
 }
 
-func (s *GeneratorSetup) writeMethodParameter(f SwaggerFile, param SwaggerParameter) {
+func (s *GeneratorSetup) writeMethodParameter(f swagger.SwaggerFile, param swagger.SwaggerParameter) {
 	out := s.out
 
-	out(param.goName())
+	out(param.GoName())
 	out(" ")
 
 	if param.Schema != nil {
-		out(param.Schema.goTypeName)
+		out(param.Schema.GoTypeName)
 	} else {
 		switch param.Type {
 		case "boolean":
@@ -127,12 +128,12 @@ func (s *GeneratorSetup) writeMethodParameter(f SwaggerFile, param SwaggerParame
 	}
 }
 
-func generateInterface(f SwaggerFile, generatorSetup GeneratorSetup) string {
+func generateInterface(f swagger.SwaggerFile, generatorSetup GeneratorSetup) string {
 	out := generatorSetup.out
 
 	for _, definition := range f.Definitions {
 		generatorSetup.writeComment(definition.Description)
-		out("type %v ", definition.goTypeName)
+		out("type %v ", definition.GoTypeName)
 		generatorSetup.writeSchemaDef(f, *definition)
 		out("\n")
 	}
@@ -159,7 +160,7 @@ func generateInterface(f SwaggerFile, generatorSetup GeneratorSetup) string {
 				if response.Schema == nil {
 					continue
 				}
-				out(response.Schema.goTypeName)
+				out(response.Schema.GoTypeName)
 				out(", ")
 			}
 
