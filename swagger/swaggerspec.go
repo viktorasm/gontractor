@@ -79,7 +79,7 @@ func (op SwaggerPathOperation) MethodCallSignature() string {
 }
 
 func (op SwaggerPathOperation) SuccessHttpCode() string {
-	for key, _ := range op.Responses {
+	for key := range op.Responses {
 		return key
 	}
 	return "http.StatusOK"
