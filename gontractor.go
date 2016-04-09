@@ -4,6 +4,9 @@ import (
 	"flag"
 	"github.com/viktorasm/gontractor/generate"
 	"github.com/viktorasm/gontractor/swagger"
+	"os"
+	"path/filepath"
+	"io/ioutil"
 )
 
 type Gontractor struct {
@@ -26,6 +29,10 @@ func NewGontractor() *Gontractor {
 }
 
 func (g Gontractor) saveFile(fileName string, contents string) error {
+	fileName = filepath.Join(g.outDir,fileName)
+	dir := filepath.Join(filepath.Dir(fileName))
+	os.MkdirAll(dir,os.ModePerm)
+	ioutil.WriteFile(fileName,[]byte(contents),0700)
 	return nil
 }
 
@@ -34,7 +41,7 @@ func (g Gontractor) Execute() error {
 	generator := generate.Generator{}
 	generator.SetTagGenerators(generate.JsonTags)
 
-	apiContents := generator.GenerateApiInterface(*spec)
+	apiContents := generator.GenerateApiInterface("api",*spec)
 	g.saveFile(g.apiOutFile, apiContents)
 	return nil
 }

@@ -13,7 +13,7 @@ func TestSwaggerGen(t *testing.T) {
 	g := Generator{}
 	g.SetTagGenerators(JsonTags)
 
-	formattedInterface := g.GenerateApiInterface(*result)
+	formattedInterface := g.GenerateApiInterface("api",*result)
 
 	g = Generator{}
 	g.SetTagGenerators(JsonTags)

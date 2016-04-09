@@ -133,8 +133,10 @@ func (g *Generator) writeMethodParameter(f swagger.SwaggerSpec, param swagger.Sw
 
 // generates common API: request/response types (based on #/definitions/*), and
 // a service interface (a function for for each HTTP method in each path)
-func (g Generator) GenerateApiInterface(f swagger.SwaggerSpec) string {
+func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpec) string {
 	out := g.out
+
+	out("package %s\n",packageName)
 
 	for _, definition := range f.Definitions {
 		g.writeComment(definition.Description)
