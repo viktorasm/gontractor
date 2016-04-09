@@ -136,7 +136,7 @@ func (g *Generator) writeMethodParameter(f swagger.SwaggerSpec, param swagger.Sw
 func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpec) string {
 	out := g.out
 
-	out("package %s\n",packageName)
+	out("package %s\n", packageName)
 
 	for _, definition := range f.Definitions {
 		g.writeComment(definition.Description)
@@ -202,11 +202,8 @@ type TemplateData struct {
 	Spec *swagger.SwaggerSpec
 }
 
-func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFileName string) string {
-	d := TemplateData{}
-	d.Package.This = "something_this"
-	d.Package.Api = "github.com/viktorasm/gontractor"
-	d.Spec = &f
+func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFileName string, templateData TemplateData) string {
+	templateData.Spec = &f
 
 	funcMap := template.FuncMap{
 		// The name "title" is what the function will be called in the template text.
@@ -215,7 +212,7 @@ func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFil
 
 	t := template.Must(template.New("server.tpl").Funcs(funcMap).ParseFiles(templateFileName))
 	w := bufio.NewWriter(&g.buf)
-	err := t.Execute(w, &d)
+	err := t.Execute(w, &templateData)
 	if err != nil {
 		panic(err.Error())
 	}
