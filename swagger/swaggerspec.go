@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+type SwaggerSpec struct {
+	Info struct {
+		Description string `yaml:"description"`
+		Title       string `yaml:"title"`
+		Version     string `yaml:"version"`
+	} `yaml:"info"`
+	BasePath    string                                      `yaml:"basePath"`
+	Paths       map[string]map[string]*SwaggerPathOperation `yaml:"paths"`
+	Parameters  map[string]*SwaggerParameter                `yaml:"parameters"`
+	Definitions map[string]*SwaggerSchema                   `yaml:"definitions"`
+}
+
 type SwaggerTypedObject struct {
 	Schema *SwaggerSchema `yaml:"schema"`
 }
@@ -20,6 +32,7 @@ type SwaggerParameter struct {
 	Description        string `yaml:"description"`
 	Required           bool   `yaml:"required"`
 	Type               string `yaml:"type"`
+	Default            string `yaml:"default"`
 }
 
 func (p SwaggerParameter) GoName() string {
@@ -29,6 +42,22 @@ func (p SwaggerParameter) GoName() string {
 	result = re.ReplaceAllString(result, "")
 	result = p.Name[0:1] + result[1:]
 	return result
+}
+
+func (p SwaggerParameter) InPath() bool {
+	return p.In == "path"
+}
+
+func (p SwaggerParameter) InQuery() bool {
+	return p.In == "query"
+}
+
+func (p SwaggerParameter) InBody() bool {
+	return p.In == "body"
+}
+
+func (p SwaggerParameter) InHeader() bool {
+	return p.In == "header"
 }
 
 type SwaggerSchema struct {
@@ -85,25 +114,27 @@ func (op SwaggerPathOperation) SuccessHttpCode() string {
 	return "http.StatusOK"
 }
 
+func (op SwaggerPathOperation) HasQueryArguments() bool {
+	for _, param := range op.Parameters {
+		if param.In == "query" {
+			return true
+		}
+	}
+	return false
+}
+
 type SwaggerPathOperationResponse struct {
 	SwaggerTypedObject `yaml:",inline"`
 	Description        string `yaml:"description"`
 }
 
-type SwaggerFile struct {
-	BasePath    string                                      `yaml:"basePath"`
-	Paths       map[string]map[string]*SwaggerPathOperation `yaml:"paths"`
-	Parameters  map[string]*SwaggerParameter                `yaml:"parameters"`
-	Definitions map[string]*SwaggerSchema                   `yaml:"definitions"`
-}
-
-func loadFile(inputFile string) (*SwaggerFile, error) {
+func loadFile(inputFile string) (*SwaggerSpec, error) {
 	file, err := ioutil.ReadFile(inputFile)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &SwaggerFile{}
+	result := &SwaggerSpec{}
 	err = yaml.Unmarshal(file, result)
 	if err != nil {
 		return nil, err
@@ -111,7 +142,7 @@ func loadFile(inputFile string) (*SwaggerFile, error) {
 	return result, nil
 }
 
-func (f SwaggerFile) replaceReferences() error {
+func (f SwaggerSpec) replaceReferences() error {
 
 	updateParamSchema := func(p *SwaggerTypedObject) {
 		if p.Schema != nil && p.Schema.Ref != "" {
@@ -165,13 +196,13 @@ func (f SwaggerFile) replaceReferences() error {
 	return nil
 }
 
-func (f SwaggerFile) generateGoTypeNames() {
+func (f SwaggerSpec) generateGoTypeNames() {
 	for key, value := range f.Definitions {
 		value.GoTypeName = strings.Title(key)
 	}
 }
 
-func (f SwaggerFile) findRefParam(ref string) (*SwaggerParameter, error) {
+func (f SwaggerSpec) findRefParam(ref string) (*SwaggerParameter, error) {
 	ref = strings.TrimPrefix(ref, "#/parameters/")
 	result, ok := f.Parameters[ref]
 	if !ok {
@@ -180,7 +211,7 @@ func (f SwaggerFile) findRefParam(ref string) (*SwaggerParameter, error) {
 	return result, nil
 }
 
-func (f SwaggerFile) FindRefSchema(ref string) (*SwaggerSchema, error) {
+func (f SwaggerSpec) FindRefSchema(ref string) (*SwaggerSchema, error) {
 	refName := strings.TrimPrefix(ref, "#/definitions/")
 	result, ok := f.Definitions[refName]
 	if !ok {
@@ -189,7 +220,7 @@ func (f SwaggerFile) FindRefSchema(ref string) (*SwaggerSchema, error) {
 	return result, nil
 }
 
-func Parse(inputfile string) *SwaggerFile {
+func Parse(inputfile string) *SwaggerSpec {
 	result, err := loadFile(inputfile)
 	if err != nil {
 		panic(err.Error())

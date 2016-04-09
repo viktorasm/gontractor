@@ -88,6 +88,12 @@ paths:
       parameters:
         - $ref: "#/parameters/roomId"
         - $ref: "#/parameters/voterId"
+        - name: start
+          in: query
+          type: integer
+        - name: count
+          in: query
+          type: integer
       responses:
         '200':
           description: "info about the room"

@@ -59,7 +59,7 @@ func (g *Generator) writeComment(s string) {
 	}
 }
 
-func (g *Generator) writeSchemaDef(f swagger.SwaggerFile, s swagger.SwaggerSchema) {
+func (g *Generator) writeSchemaDef(f swagger.SwaggerSpec, s swagger.SwaggerSchema) {
 	out := g.out
 
 	if s.Ref != "" {
@@ -105,7 +105,7 @@ func (g *Generator) writeSchemaDef(f swagger.SwaggerFile, s swagger.SwaggerSchem
 	}
 }
 
-func (g *Generator) writeMethodParameter(f swagger.SwaggerFile, param swagger.SwaggerParameter) {
+func (g *Generator) writeMethodParameter(f swagger.SwaggerSpec, param swagger.SwaggerParameter) {
 	out := g.out
 
 	out(param.GoName())
@@ -133,7 +133,7 @@ func (g *Generator) writeMethodParameter(f swagger.SwaggerFile, param swagger.Sw
 
 // generates common API: request/response types (based on #/definitions/*), and
 // a service interface (a function for for each HTTP method in each path)
-func (g Generator) GenerateApiInterface(f swagger.SwaggerFile) string {
+func (g Generator) GenerateApiInterface(f swagger.SwaggerSpec) string {
 	out := g.out
 
 	for _, definition := range f.Definitions {
@@ -197,10 +197,10 @@ type TemplateData struct {
 		This string
 		Api  string
 	}
-	Spec *swagger.SwaggerFile
+	Spec *swagger.SwaggerSpec
 }
 
-func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerFile, templateFileName string) string {
+func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFileName string) string {
 	d := TemplateData{}
 	d.Package.This = "something_this"
 	d.Package.Api = "github.com/viktorasm/gontractor"
