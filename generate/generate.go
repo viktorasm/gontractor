@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"errors"
 )
 
 type TagGeneratorFunc func(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string
@@ -59,22 +60,25 @@ func (g *Generator) writeComment(s string) {
 	}
 }
 
-func (g *Generator) writeSchemaDef(f swagger.SwaggerSpec, s swagger.SwaggerSchema) {
+func (g *Generator) writeSchemaDef(f swagger.SwaggerSpec, s swagger.SwaggerSchema) error {
 	out := g.out
 
 	if s.Ref != "" {
 		ref, err := f.FindRefSchema(s.Ref)
 		if err != nil {
-			panic(err.Error())
+			return err
 		}
 		out(ref.GoTypeName)
-		return
+		return nil
 	}
 
 	switch s.Type {
 	case "array":
 		out("[]")
-		g.writeSchemaDef(f, *s.Items)
+		err := g.writeSchemaDef(f, *s.Items)
+		if err!=nil{
+			return err
+		}
 	case "boolean":
 		out("bool")
 	case "integer":
@@ -91,7 +95,10 @@ func (g *Generator) writeSchemaDef(f swagger.SwaggerSpec, s swagger.SwaggerSchem
 			out("    ")
 			out(strings.Title(name))
 			out(" ")
-			g.writeSchemaDef(f, *prop)
+			err := g.writeSchemaDef(f, *prop)
+			if err != nil {
+				return err
+			}
 			out(" ")
 			out(g.generateTag(name, *prop, s))
 
@@ -101,8 +108,10 @@ func (g *Generator) writeSchemaDef(f swagger.SwaggerSpec, s swagger.SwaggerSchem
 		out("}\n")
 
 	default:
-		panic("unknown schema type " + s.Type)
+		return errors.New("unknown schema type " + s.Type)
 	}
+
+	return nil
 }
 
 func (g *Generator) writeMethodParameter(f swagger.SwaggerSpec, param swagger.SwaggerParameter) {
@@ -133,7 +142,7 @@ func (g *Generator) writeMethodParameter(f swagger.SwaggerSpec, param swagger.Sw
 
 // generates common API: request/response types (based on #/definitions/*), and
 // a service interface (a function for for each HTTP method in each path)
-func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpec) string {
+func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpec) (string,error) {
 	out := g.out
 
 	out("package %s\n", packageName)
@@ -141,7 +150,10 @@ func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpe
 	for _, definition := range f.Definitions {
 		g.writeComment(definition.Description)
 		out("type %v ", definition.GoTypeName)
-		g.writeSchemaDef(f, *definition)
+		err := g.writeSchemaDef(f, *definition)
+		if err!=nil{
+			return "",err
+		}
 		out("\n")
 	}
 
@@ -180,7 +192,7 @@ func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpe
 	out("}\n")
 
 	//fmt.Println(generatorSetup.buf.String())
-	return g.formattedOutput()
+	return g.formattedOutput(),nil
 }
 
 func (g Generator) formattedOutput() string {

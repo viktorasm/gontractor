@@ -25,18 +25,29 @@ func TestE2E(t *testing.T) {
 
 func TestGetPackageName(t *testing.T) {
 	g := NewGontractor()
-	require.Equal(t, "gontractor", g.getPackageName("server.go"))
-	require.Equal(t, "gontractor", g.getPackageName("./server.go"))
-	require.Equal(t, "foo", g.getPackageName("foo/server.go"))
-	require.Equal(t, "foo", g.getPackageName("./foo/server.go"))
-	require.Equal(t, "foo", g.getPackageName("bar/foo/server.go"))
-	require.Equal(t, "foo", g.getPackageName("./bar/foo/server.go"))
+
+	noError := func(p string, err error) string {
+		require.NoError(t, err)
+		return p
+	}
+
+	require.Equal(t, "gontractor", noError(g.getPackageName("server.go")))
+	require.Equal(t, "gontractor", noError(g.getPackageName("./server.go")))
+	require.Equal(t, "foo", noError(g.getPackageName("foo/server.go")))
+	require.Equal(t, "foo", noError(g.getPackageName("./foo/server.go")))
+	require.Equal(t, "foo", noError(g.getPackageName("bar/foo/server.go")))
+	require.Equal(t, "foo", noError(g.getPackageName("./bar/foo/server.go")))
 }
 
 func TestGetAbsolutePackagePath(t *testing.T) {
 	g := NewGontractor()
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", g.getAbsolutePackagePath("server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", g.getAbsolutePackagePath("./server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", g.getAbsolutePackagePath("bar/foo/server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", g.getAbsolutePackagePath("./bar/foo/server.go"))
+
+	noError := func(p string, err error) string {
+		require.NoError(t, err)
+		return p
+	}
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", noError(g.getAbsolutePackagePath("server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", noError(g.getAbsolutePackagePath("./server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", noError(g.getAbsolutePackagePath("bar/foo/server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", noError(g.getAbsolutePackagePath("./bar/foo/server.go")))
 }

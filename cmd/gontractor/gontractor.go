@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"fmt"
 )
 
 type Gontractor struct {
@@ -35,22 +36,22 @@ func (g Gontractor) saveFile(fileName string, contents string) error {
 }
 
 // locates workspace root in the fileName, and returns subdir from {workspace/src}
-func (g Gontractor) getAbsolutePackagePath(fileName string) string {
+func (g Gontractor) getAbsolutePackagePath(fileName string) (string, error) {
 	abs, err := filepath.Abs(fileName)
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 	i := strings.LastIndex(abs, "src")
-	return filepath.Dir(abs[i+4:])
+	return filepath.Dir(abs[i+4:]), nil
 }
 
 // guesses package name for given output Go file. handles relative urls
-func (g Gontractor) getPackageName(fileName string) string {
+func (g Gontractor) getPackageName(fileName string) (string, error) {
 	abs, err := filepath.Abs(fileName)
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
-	return filepath.Base(filepath.Dir(abs))
+	return filepath.Base(filepath.Dir(abs)), nil
 }
 
 func (g Gontractor) Execute() error {
@@ -58,15 +59,25 @@ func (g Gontractor) Execute() error {
 	generator := generate.Generator{}
 	generator.SetTagGenerators(generate.JsonTags)
 
-	apiContents := generator.GenerateApiInterface("api", *spec)
+	apiContents,err := generator.GenerateApiInterface("api", *spec)
+	if err != nil {
+		return err
+	}
 	g.saveFile(g.apiOutFile, apiContents)
 
 	templateData := generate.TemplateData{}
 	templateData.Package.This = filepath.Base(filepath.Dir(g.serverOutFile))
-	templateData.Package.Api = g.getAbsolutePackagePath(g.apiOutFile)
+	templateData.Package.Api, err = g.getAbsolutePackagePath(g.apiOutFile)
+	if err != nil {
+		return err
+	}
 
 	serverContents := generator.GenerateServerFromTemplate(*spec, g.serverTemplate, templateData)
-	g.saveFile(g.serverOutFile, serverContents)
+	err = g.saveFile(g.serverOutFile, serverContents)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -76,5 +87,10 @@ func main() {
 	flag.StringVar(&g.spec, "spec", "swagger.yaml", "service specification flag")
 	flag.StringVar(&g.serverTemplate, "server-template", "", "template to generate server")
 
-	g.Execute()
+	err := g.Execute()
+	if err!=nil {
+		fmt.Fprintf(os.Stderr,"Command failed: ", err.Error())
+		flag.Usage()
+		os.Exit(1)
+	}
 }
