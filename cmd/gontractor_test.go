@@ -31,8 +31,8 @@ func TestGetPackageName(t *testing.T) {
 		return p
 	}
 
-	require.Equal(t, "gontractor", noError(g.getPackageName("server.go")))
-	require.Equal(t, "gontractor", noError(g.getPackageName("./server.go")))
+	require.Equal(t, "cmd", noError(g.getPackageName("server.go")))
+	require.Equal(t, "cmd", noError(g.getPackageName("./server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("foo/server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("./foo/server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("bar/foo/server.go")))
