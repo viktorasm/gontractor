@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 	"errors"
+	"path/filepath"
 )
 
 type TagGeneratorFunc func(fieldName string, fieldDefinition swagger.SwaggerSchema, objectDefinition swagger.SwaggerSchema) string
@@ -222,7 +223,7 @@ func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFil
 		"title": strings.Title,
 	}
 
-	t := template.Must(template.New("server.tpl").Funcs(funcMap).ParseFiles(templateFileName))
+	t := template.Must(template.New(filepath.Base(templateFileName)).Funcs(funcMap).ParseFiles(templateFileName))
 	w := bufio.NewWriter(&g.buf)
 	err := t.Execute(w, &templateData)
 	if err != nil {
