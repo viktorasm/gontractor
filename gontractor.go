@@ -67,8 +67,12 @@ func (g Gontractor) Execute() error {
 	g.saveFile(g.apiOutFile, apiContents)
 
 	templateData := generate.TemplateData{}
-	templateData.Package.This = filepath.Base(filepath.Dir(g.serverOutFile))
 	templateData.Package.Api, err = g.getAbsolutePackagePath(g.apiOutFile)
+	if err != nil {
+		return err
+	}
+
+	templateData.Package.This, err = g.getPackageName(g.serverOutFile)
 	if err != nil {
 		return err
 	}
