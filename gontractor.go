@@ -22,6 +22,7 @@ type Gontractor struct {
 func NewGontractor() *Gontractor {
 	return &Gontractor{
 		spec:          "swagger.yaml",
+		serverTemplate: "server.tpl",
 		serverOutFile: "server_generated.go",
 		clientOutFile: "client/client.go",
 		apiOutFile:    "api/api.go",
@@ -86,6 +87,7 @@ func main() {
 
 	flag.StringVar(&g.spec, "spec", "swagger.yaml", "service specification flag")
 	flag.StringVar(&g.serverTemplate, "server-template", "", "template to generate server")
+	flag.Parse()
 
 	err := g.Execute()
 	if err!=nil {
