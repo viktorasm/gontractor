@@ -164,7 +164,7 @@ func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpe
 			out("// %s %s\n", strings.ToUpper(httpMethod), httpPath)
 			g.writeComment(methodDef.Description)
 
-			methodDef.GoInfo.InterfaceMethodName = g.generateMethodName(httpMethod, httpPath, *methodDef)
+			methodDef.GoInfo.InterfaceMethodName = strings.Title(g.generateMethodName(httpMethod, httpPath, *methodDef))
 			out(methodDef.GoInfo.InterfaceMethodName)
 			out("(")
 			for index, param := range methodDef.Parameters {
