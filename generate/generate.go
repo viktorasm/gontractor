@@ -181,6 +181,7 @@ func (g Generator) GenerateApiInterface(packageName string, f swagger.SwaggerSpe
 				if response.Schema == nil {
 					continue
 				}
+				out("*")
 				out(response.Schema.GoTypeName)
 				out(", ")
 			}
