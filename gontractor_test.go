@@ -13,10 +13,10 @@ func requireFileExists(t *testing.T, file string) {
 
 func TestE2E(t *testing.T) {
 	g := NewGontractor()
-	g.spec = "../test-resources/swagger.yaml"
-	g.apiOutFile = "../test-output/testE2E/api/api.go_"
-	g.serverOutFile = "../test-output/testE2E/server_generated.go_"
-	g.serverTemplate = "../sample-templates/proprietary-api/server.tpl"
+	g.spec = "test-resources/swagger.yaml"
+	g.apiOutFile = "test-output/testE2E/api/api.go_"
+	g.serverOutFile = "test-output/testE2E/server_generated.go_"
+	g.serverTemplate = "sample-templates/proprietary-api/server.tpl"
 	g.Execute()
 
 	requireFileExists(t, g.apiOutFile)
@@ -31,8 +31,8 @@ func TestGetPackageName(t *testing.T) {
 		return p
 	}
 
-	require.Equal(t, "cmd", noError(g.getPackageName("server.go")))
-	require.Equal(t, "cmd", noError(g.getPackageName("./server.go")))
+	require.Equal(t, "gontractor", noError(g.getPackageName("server.go")))
+	require.Equal(t, "gontractor", noError(g.getPackageName("./server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("foo/server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("./foo/server.go")))
 	require.Equal(t, "foo", noError(g.getPackageName("bar/foo/server.go")))
@@ -46,8 +46,8 @@ func TestGetAbsolutePackagePath(t *testing.T) {
 		require.NoError(t, err)
 		return p
 	}
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd", noError(g.getAbsolutePackagePath("server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd", noError(g.getAbsolutePackagePath("./server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/bar/foo", noError(g.getAbsolutePackagePath("bar/foo/server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor/cmd/bar/foo", noError(g.getAbsolutePackagePath("./bar/foo/server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor", noError(g.getAbsolutePackagePath("server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor", noError(g.getAbsolutePackagePath("./server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", noError(g.getAbsolutePackagePath("bar/foo/server.go")))
+	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", noError(g.getAbsolutePackagePath("./bar/foo/server.go")))
 }
