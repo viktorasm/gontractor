@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/viktorasm/gontractor/generate"
 	"github.com/viktorasm/gontractor/swagger"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"fmt"
 )
 
 type Gontractor struct {
@@ -21,11 +21,11 @@ type Gontractor struct {
 
 func NewGontractor() *Gontractor {
 	return &Gontractor{
-		spec:          "swagger.yaml",
+		spec:           "swagger.yaml",
 		serverTemplate: "server.tpl",
-		serverOutFile: "server_generated.go",
-		clientOutFile: "client/client.go",
-		apiOutFile:    "api/api.go",
+		serverOutFile:  "server_generated.go",
+		clientOutFile:  "client/client.go",
+		apiOutFile:     "api/api.go",
 	}
 }
 
@@ -60,7 +60,7 @@ func (g Gontractor) Execute() error {
 	generator := generate.Generator{}
 	generator.SetTagGenerators(generate.JsonTags)
 
-	apiContents,err := generator.GenerateApiInterface("api", *spec)
+	apiContents, err := generator.GenerateApiInterface("api", *spec)
 	if err != nil {
 		return err
 	}
@@ -94,8 +94,8 @@ func main() {
 	flag.Parse()
 
 	err := g.Execute()
-	if err!=nil {
-		fmt.Fprintf(os.Stderr,"Command failed: ", err.Error())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Command failed: ", err.Error())
 		flag.Usage()
 		os.Exit(1)
 	}
