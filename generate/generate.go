@@ -222,10 +222,15 @@ func (g Generator) GenerateServerFromTemplate(f swagger.SwaggerSpec, templateFil
 		// The name "title" is what the function will be called in the template text.
 		"title": strings.Title,
 	}
+	t := template.New(filepath.Base(templateFileName))
+	t = t.Funcs(funcMap)
+	t, err := t.ParseFiles(templateFileName)
+	if err!=nil {
+		panic(err.Error())
+	}
 
-	t := template.Must(template.New(filepath.Base(templateFileName)).Funcs(funcMap).ParseFiles(templateFileName))
 	w := bufio.NewWriter(&g.buf)
-	err := t.Execute(w, &templateData)
+	err = t.Execute(w, &templateData)
 	if err != nil {
 		panic(err.Error())
 	}
