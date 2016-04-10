@@ -13,10 +13,10 @@ func requireFileExists(t *testing.T, file string) {
 
 func TestE2E(t *testing.T) {
 	g := NewGontractor()
-	g.spec = "./test-resources/swagger.yaml"
-	g.apiOutFile = "./test-output/testE2E/api/api.go_"
-	g.serverOutFile = "./test-output/testE2E/server_generated.go_"
-	g.serverTemplate = "sample-templates/proprietary-api/server.tpl"
+	g.spec = "../../test-resources/swagger.yaml"
+	g.apiOutFile = "../../test-output/testE2E/api/api.go_"
+	g.serverOutFile = "../../test-output/testE2E/server_generated.go_"
+	g.serverTemplate = "../../sample-templates/proprietary-api/server.tpl"
 	g.Execute()
 
 	requireFileExists(t, g.apiOutFile)
@@ -35,8 +35,8 @@ func TestGetPackageName(t *testing.T) {
 
 func TestGetAbsolutePackagePath(t *testing.T) {
 	g := NewGontractor()
-	require.Equal(t, "github.com/viktorasm/gontractor", g.getAbsolutePackagePath("server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor", g.getAbsolutePackagePath("./server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", g.getAbsolutePackagePath("bar/foo/server.go"))
-	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", g.getAbsolutePackagePath("./bar/foo/server.go"))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", g.getAbsolutePackagePath("server.go"))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor", g.getAbsolutePackagePath("./server.go"))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", g.getAbsolutePackagePath("bar/foo/server.go"))
+	require.Equal(t, "github.com/viktorasm/gontractor/cmd/gontractor/bar/foo", g.getAbsolutePackagePath("./bar/foo/server.go"))
 }
