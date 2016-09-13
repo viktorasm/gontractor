@@ -128,6 +128,9 @@ definitions:
         type: boolean
         description: Is voter the owner of the room?
         readOnly: true
+      base64data:
+        type: string
+        format: byte
     required:
     - owner
   roomInfo:

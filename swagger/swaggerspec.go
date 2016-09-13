@@ -32,6 +32,7 @@ type SwaggerParameter struct {
 	Description        string `yaml:"description"`
 	Required           bool   `yaml:"required"`
 	Type               string `yaml:"type"`
+	Format             string `yaml:"format"`
 	Default            string `yaml:"default"`
 }
 
@@ -64,6 +65,7 @@ type SwaggerSchema struct {
 	GoTypeName  string
 	Ref         string                     `yaml:"$ref"`
 	Type        string                     `yaml:"type"`
+	Format      string                     `yaml:"format"`
 	ReadOnly    bool                       `yaml:"readOnly"`
 	Properties  *map[string]*SwaggerSchema `yaml:"properties"`
 	Description string                     `yaml:"description"`
