@@ -42,8 +42,13 @@ func (g Gontractor) getAbsolutePackagePath(fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	i := strings.LastIndex(abs, "src")
-	return filepath.Dir(abs[i+4:]), nil
+
+	// pick up everything after last "src/"
+	result := filepath.Dir(abs[strings.LastIndex(abs, filepath.FromSlash("/src/"))+5:])
+
+	// make sure we have correct slashes: /
+	result = filepath.ToSlash(result)
+	return result, nil
 }
 
 // guesses package name for given output Go file. handles relative urls
@@ -95,7 +100,7 @@ func main() {
 
 	err := g.Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Command failed: ", err.Error())
+		fmt.Fprintf(os.Stderr, "Command failed: %s", err.Error())
 		flag.Usage()
 		os.Exit(1)
 	}
