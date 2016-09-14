@@ -10,6 +10,5 @@ func TestParamGoName(t *testing.T) {
 		Name: "voter-id",
 	}
 
-	require.Equal(t, "voterId", p.GoName())
-
+	require.Equal(t, p.GoName(), "voterId")
 }

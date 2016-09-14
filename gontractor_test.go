@@ -26,28 +26,31 @@ func TestE2E(t *testing.T) {
 func TestGetPackageName(t *testing.T) {
 	g := NewGontractor()
 
-	noError := func(p string, err error) string {
+	validate := func(expectedPackageName string, packageFile string) {
+		name, err := g.getPackageName(packageFile)
 		require.NoError(t, err)
-		return p
+		require.Equal(t, name, expectedPackageName)
 	}
 
-	require.Equal(t, "gontractor", noError(g.getPackageName("server.go")))
-	require.Equal(t, "gontractor", noError(g.getPackageName("./server.go")))
-	require.Equal(t, "foo", noError(g.getPackageName("foo/server.go")))
-	require.Equal(t, "foo", noError(g.getPackageName("./foo/server.go")))
-	require.Equal(t, "foo", noError(g.getPackageName("bar/foo/server.go")))
-	require.Equal(t, "foo", noError(g.getPackageName("./bar/foo/server.go")))
+	validate("gontractor", "server.go")
+	validate("gontractor", "./server.go")
+	validate("foo", "foo/server.go")
+	validate("foo", "./foo/server.go")
+	validate("foo", "bar/foo/server.go")
+	validate("foo", "./bar/foo/server.go")
 }
 
 func TestGetAbsolutePackagePath(t *testing.T) {
 	g := NewGontractor()
 
-	noError := func(p string, err error) string {
+	validate := func(expectedPackagePath string, relativeFileName string) {
+		path, err := g.getAbsolutePackagePath(relativeFileName)
 		require.NoError(t, err)
-		return p
+		require.Equal(t, path, expectedPackagePath)
 	}
-	require.Equal(t, "github.com/viktorasm/gontractor", noError(g.getAbsolutePackagePath("server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor", noError(g.getAbsolutePackagePath("./server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", noError(g.getAbsolutePackagePath("bar/foo/server.go")))
-	require.Equal(t, "github.com/viktorasm/gontractor/bar/foo", noError(g.getAbsolutePackagePath("./bar/foo/server.go")))
+
+	validate("github.com/viktorasm/gontractor", "server.go")
+	validate("github.com/viktorasm/gontractor", "./server.go")
+	validate("github.com/viktorasm/gontractor/bar/foo", "bar/foo/server.go")
+	validate("github.com/viktorasm/gontractor/bar/foo", "./bar/foo/server.go")
 }
